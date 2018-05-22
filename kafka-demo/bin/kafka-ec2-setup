@@ -1,0 +1,45 @@
+#!/bin/bash
+
+function usage {
+	echo "Usage: $PROG server_external_ip server_internal_ip consumer_ip"
+	echo "    server_external_ip   AWS external IP address of Kafak server"
+	echo "    server_internal_ip   AWS internal IP address of Kafak server"
+	echo "    consumer_ip          AWS external IP address of Kafak consumer"
+	exit
+}
+
+PEM=/Users/jcavanaugh/Documents/AWS/jdc-SGT-AWS-Oregon.pem
+KAFKA_BIN=/opt/bitnami/kafka/bin
+
+PROG=`basename $0`
+
+if [ $# -eq 0 ]; then
+	usage
+fi
+if [ $# -lt 3 ]; then
+	echo "Not enough arguments"
+	exit 1
+fi
+if [ $# -gt 3 ]; then
+	echo "Too many arguments"
+	exit 1
+fi
+
+SERVER_EXTERNAL=$1
+SERVER_INTERNAL=$2
+CONSUMER=$3
+
+sed s/@SERVER_EXTERNAL_IP@/$SERVER_EXTERNAL/ < in/server.properties.in > server.properties
+sed s/@SERVER_INTERNAL_IP@/$SERVER_INTERNAL/ < in/kafka-consumer.in > bin/kafka-consumer
+sed s/@SERVER_EXTERNAL_IP@/$SERVER_EXTERNAL/ < in/kafka-producer.in > bin/kafka-producer
+sed s/@KAFKA_IP@/$SERVER_EXTERNAL/ < in/ec2-ssh.in > bin/ec2-server
+sed s/@KAFKA_IP@/$CONSUMER/ < in/ec2-ssh.in > bin/ec2-consumer
+
+pushd ..
+scp -i $PEM -r kafka-demo bitnami@$SERVER_EXTERNAL:kafka-demo
+scp -i $PEM -r kafka-demo bitnami@$CONSUMER:kafka-demo
+popd
+
+# Kill and restart the server
+ssh -i $PEM bitnami@$SERVER_EXTERNAL sudo $KAFKA_BIN/kafka-server-stop.sh
+ssh -i $PEM bitnami@$SERVER_EXTERNAL sudo $KAFKA_BIN/kafka-server-start.sh -daemon kafka-demo/server.properties

@@ -1,0 +1,11 @@
+#!/bin/bash
+
+set -o vi
+export RABBIT=/opt/bitnami/rabbitmq
+
+export PATH=$PATH:$PWD/bin:$RABBIT/bin:$RABBIT/sbin
+
+#sudo easy_install pika
+sudo apt-get update
+sudo apt-get install python-pip
+sudo pip install pika

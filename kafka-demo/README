@@ -1,0 +1,57 @@
+Kafka Message Queuing Demo on AWS
+John Cavanaugh
+2018-05-22
+
+
+This demo demonstrates the transfer of data into AWS with Kafka.  It
+will run the producer on the "Ground" station (e.g. a laptop), the
+broker (server) on an AWS EC2 instance, and the consumer on a second
+EC2 instance.
+
+To run the demo, start up two EC2 instances on AWS.  Use the search
+function in the AWS Marketplace, search for "Kafka", and use one of
+the Debian images.  Set up a security group that allows incoming
+traffic on these ports:
+
+    Port         Source         Description
+    ----         ------         -----------
+    22           Ground         SSH
+    2181         Ground         Zookeeper
+    9092         Anywhere       Kafka
+    All traffic  Members of SG  Misc. traffic
+
+Unfortunately, I have not found a more restrictive rule for port 9092
+that allows Kafka to run.  Be sure to enable assignment of public IP
+addresses.  You may also find it useful to allow ICMP Echo Requests
+and Echo Replies so you can ping the EC2 instances.
+
+Once the AWS instances are running, designate one for the server
+and the other for the consumer.  Get both the external and AWS 
+internal IP addresses of the server node and the external IP address
+of the consumer node.  You may use the domain names if you prefer.  Set
+up the demo with these commands:
+    cd <path>/kafka-demo
+    . .setup
+    kafka-ec2-setup <Server external IP> <Server internal IP> <Consumer 
+
+This will create scripts with the correct IP addresses, copy the
+demo directory to the consumer, and restart the Kafka server with the
+configuration file for the demo.  Start the producer on your ground
+station with:
+    cd <path>/kafka-demo
+    . .setup
+    kafka-producer
+
+The producer will give you a prompt and you may type messages as
+you like.  Log on to the consumer with:
+    ec2-consumer
+    cd kafka-demo
+    . .setup
+    kafka-consumer
+
+You will see any messages you've already typed at the producer.  Type
+more messages at the producer and you will see them appear at the
+consumer.  Demonstrate that the consumer can replay the messages by
+killing and restarting it.  You will see all the messages that the
+producer sent.
+

@@ -1,0 +1,52 @@
+#!/bin/bash -x
+
+function usage {
+	echo "Usage: $PROG server_external_ip server_internal_ip consumer_ip"
+	echo "    server_external_ip   AWS external IP address of Kafak server"
+	echo "    server_internal_ip   AWS internal IP address of Kafak server"
+	echo "    consumer_ip          AWS external IP address of Kafak consumer"
+	exit
+}
+
+PEM=/Users/jcavanaugh/Documents/AWS/jdc-SGT-AWS-Oregon.pem
+RABBIT=/opt/bitnami/rabbitmq
+PROG=`basename $0`
+
+if [ $# -eq 0 ]; then
+	usage
+fi
+if [ $# -lt 3 ]; then
+	echo "Not enough arguments"
+	exit 1
+fi
+if [ $# -gt 3 ]; then
+	echo "Too many arguments"
+	exit 1
+fi
+
+SERVER_EXTERNAL=$1
+SERVER_INTERNAL=$2
+CONSUMER=$3
+
+sed s/@PY_PROG@/worker.py/ < in/py-program.in |
+	sed s/@RABBIT_IP@/$SERVER_INTERNAL/ > bin/rabbit-AWS-consumer
+sed s/@PY_PROG@/worker.py/ < in/py-program.in |
+	sed s/@RABBIT_IP@/$SERVER_EXTERNAL/ > bin/rabbit-local-consumer
+sed s/@PY_PROG@/new_task.py/ < in/py-program.in |
+	sed s/@RABBIT_IP@/$SERVER_EXTERNAL/ > bin/rabbit-producer
+sed s/@PY_PROG@/priority_queue_producer.py/ < in/py-program.in |
+	sed s/@RABBIT_IP@/$SERVER_EXTERNAL/ > bin/rabbit-pri-producer
+sed s/@PY_PROG@/priority_queue_consumer.py/ < in/py-program.in |
+	sed s/@RABBIT_IP@/$SERVER_INTERNAL/ > bin/rabbit-pri-consumer
+chmod +x bin/*
+
+pushd ..
+scp -i $PEM -r rabbit-demo bitnami@$CONSUMER:rabbit-demo
+popd
+
+# Set up the server
+ssh -i $PEM bitnami@$1 sudo $RABBIT/sbin/rabbitmqctl add_user jdc "jdc-pw"
+ssh -i $PEM bitnami@$1 sudo $RABBIT/sbin/rabbitmqctl set_permissions jdc \".*\" \".*\" \".*\"
+
+# Log in to the client
+ssh -i $PEM bitnami@$CONSUMER

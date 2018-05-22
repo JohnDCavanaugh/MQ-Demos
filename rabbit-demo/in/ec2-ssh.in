@@ -1,0 +1,5 @@
+#!/bin/bash -x
+
+PEM=/Users/jcavanaugh/Documents/AWS/jdc-SGT-AWS-Oregon.pem
+
+ssh -i $PEM bitnami@@RABBIT_IP@

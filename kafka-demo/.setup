@@ -1,0 +1,8 @@
+#!/bin/bash
+
+set -o vi
+export KAFKA=/opt/bitnami/kafka
+export KAFKA_BIN=$KAFKA/bin
+export KAFKA_CONFIG=$KAFKA/config
+
+export PATH=$PATH:$PWD/bin:$KAFKA_BIN

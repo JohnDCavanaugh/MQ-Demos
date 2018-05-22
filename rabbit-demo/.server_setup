@@ -1,0 +1,9 @@
+#!/bin/bash
+
+set -o vi
+export RABBIT=/opt/bitnami/rabbitmq
+
+export PATH=$PATH:$PWD/bin:$RABBIT/bin:$RABBIT/sbin
+
+sudo $RABBIT/sbin/rabbitmqctl add_user jdc "jdc-pw"
+sudo $RABBIT/sbin/rabbitmqctl set_permissions jdc ".*" ".*" ".*"

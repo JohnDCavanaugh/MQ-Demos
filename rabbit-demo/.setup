@@ -1,0 +1,5 @@
+#!/bin/bash
+
+set -o vi
+
+export PATH=$PATH:$PWD/bin
